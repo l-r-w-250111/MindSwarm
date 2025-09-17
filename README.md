@@ -61,6 +61,7 @@ python3 persona_sim/main.py --model <model_name> --personas <path_to_personas.md
 -   `--personas`: (Optional) Path to the Markdown file containing persona definitions. Defaults to `personas.md`.
 -   `--scenario`: (Optional) Path to the Markdown file containing the scenario. Defaults to `scenario.md`.
 -   `--output-log`: (Optional) Path to save the unified output log file. Defaults to `simulation_log.md`.
+-   `--listen-to-all`: (Optional) A flag that, if set, makes all personas hear all other personas' statements. By default, they only hear from their top influencers.
 
 **Example:**
 
@@ -83,3 +84,16 @@ You can easily create your own simulations by creating new persona and scenario 
 
 -   **Personas (`.md`):** Define each persona with a `profile:` key. Separate personas with `---`.
 -   **Scenarios (`.md`):** Write the event description for each time step. Separate steps with `---`.
+
+### Tip: Multi-language Simulation
+
+You can instruct personas to think and speak in a specific language by including it in their profile. The LLM will pick up on this instruction.
+
+For example, to create a persona that speaks Japanese:
+
+**`personas.md`**
+```markdown
+profile: 私は日本の東京出身のエンジニアです。日本語で考え、日本語で話します。イノベーションと効率性を重視します。
+---
+profile: I am a marketing manager from California. I think and speak in English and am focused on customer engagement.
+```

@@ -60,7 +60,7 @@ def load_personas_from_md(filepath: str) -> list[str]:
                 break
     return profiles
 
-def run_llm_simulation(model_name: str, scenario_path: str, personas_path: str, log_path: str, population_size=10):
+def run_llm_simulation(model_name: str, scenario_path: str, personas_path: str, log_path: str, population_size=10, listen_to_all=False):
     """
     Runs a simulation with a unified logger and dynamically generated ideological axes.
     """
@@ -114,16 +114,28 @@ def run_llm_simulation(model_name: str, scenario_path: str, personas_path: str, 
 
             for persona in population:
                 memory = persona_self_memories[persona.id]
-                influencer_row = influence_matrix.getrow(persona.id)
-                top_influencer_indices = influencer_row.toarray().argsort()[0][-3:-1]
-
+                
                 peer_context = []
-                for influencer_id in top_influencer_indices:
-                    score = influencer_row[0, influencer_id]
-                    if score > 0:
-                        influencer_statement = statements_previous_step.get(influencer_id, "")
-                        if influencer_statement:
-                            peer_context.append((score, influencer_statement))
+                if listen_to_all:
+                    # Hear from everyone
+                    for other_persona in population:
+                        if other_persona.id == persona.id:
+                            continue
+                        statement = statements_previous_step.get(other_persona.id, "")
+                        if statement:
+                            # In this mode, we don't have a specific influence score, so we can use a neutral value like 1.0
+                            peer_context.append((1.0, statement))
+                else:
+                    # Hear from top influencers
+                    influencer_row = influence_matrix.getrow(persona.id)
+                    top_influencer_indices = influencer_row.toarray().argsort()[0][-3:-1]
+
+                    for influencer_id in top_influencer_indices:
+                        score = influencer_row[0, influencer_id]
+                        if score > 0:
+                            influencer_statement = statements_previous_step.get(influencer_id, "")
+                            if influencer_statement:
+                                peer_context.append((score, influencer_statement))
 
                 thought = generate_thought(persona, event, model_name, logger, peer_context, memory)
                 statement = generate_statement_from_thought(persona.profile, thought, model_name, logger)
@@ -167,11 +179,13 @@ if __name__ == "__main__":
     parser.add_argument("--scenario", type=str, default="scenario.md", help="Path to the Markdown file containing the simulation scenario.")
     parser.add_argument("--personas", type=str, default="personas.md", help="Path to the Markdown file containing the persona definitions.")
     parser.add_argument("--output-log", type=str, default="simulation_log.md", help="Path to save the unified output log file.")
+    parser.add_argument("--listen-to-all", action="store_true", help="If set, all personas hear all other statements.")
     args = parser.parse_args()
 
     run_llm_simulation(
         model_name=args.model,
         scenario_path=args.scenario,
         personas_path=args.personas,
-        log_path=args.output_log
+        log_path=args.output_log,
+        listen_to_all=args.listen_to_all
     )
