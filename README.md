@@ -57,7 +57,7 @@ python3 persona_sim/main.py --model <model_name> --personas <path_to_personas.md
 
 **Arguments:**
 
--   `--model`: (Required) The name of the Ollama model to use (e.g., `llama3`, `gemma:2b`).
+-   `--model`: (Required) The name of the Ollama model to use (e.g., `llama3`, `gemma3`).
 -   `--personas`: (Optional) Path to the Markdown file containing persona definitions. Defaults to `personas.md`.
 -   `--scenario`: (Optional) Path to the Markdown file containing the scenario. Defaults to `scenario.md`.
 -   `--output-log`: (Optional) Path to save the unified output log file. Defaults to `simulation_log.md`.
