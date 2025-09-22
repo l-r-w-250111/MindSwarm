@@ -2,6 +2,8 @@ import numpy as np
 import argparse
 import sys
 import os
+import gui
+from PySide6.QtWidgets import QApplication
 from persona import Persona
 from simulation import build_influence_matrix
 from llm_integration import (
@@ -154,7 +156,12 @@ def run_llm_simulation(model_name: str, scenario_path: str, personas_path: str, 
                 persona_self_memories[persona.id] = thought
                 statements_this_step[persona.id] = statement
                 current_moods.append(persona.mood)
-                step_persona_data.append({'id': persona.id, 'thought': thought, 'statement': statement})
+                step_persona_data.append({
+                    'id': persona.id,
+                    'profile': persona.profile,
+                    'thought': thought,
+                    'statement': statement
+                })
 
             structured_log.append({'step': step + 1, 'event': event, 'personas': step_persona_data})
 
@@ -188,19 +195,25 @@ def run_llm_simulation(model_name: str, scenario_path: str, personas_path: str, 
         logger.close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a command-line LLM-driven persona simulation.")
-    parser.add_argument("--model", type=str, default="gemma3:12b", help="The name of the Ollama model to use (e.g., 'gemma3:12b').")
-    parser.add_argument("--scenario", type=str, default="scenario.md", help="Path to the Markdown file containing the simulation scenario.")
-    parser.add_argument("--personas", type=str, default="personas.md", help="Path to the Markdown file containing the persona definitions.")
-    parser.add_argument("--output-log", type=str, default="simulation_log.md", help="Path to save the unified output log file.")
-    parser.add_argument("--listen-to-all", action="store_true", help="If set, all personas hear all other statements.")
-    args = parser.parse_args()
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(description="Run a command-line LLM-driven persona simulation.")
+        parser.add_argument("--model", type=str, default="gemma3:12b", help="The name of the Ollama model to use (e.g., 'gemma3:12b').")
+        parser.add_argument("--scenario", type=str, default="scenario.md", help="Path to the Markdown file containing the simulation scenario.")
+        parser.add_argument("--personas", type=str, default="personas.md", help="Path to the Markdown file containing the persona definitions.")
+        parser.add_argument("--output-log", type=str, default="simulation_log.md", help="Path to save the unified output log file.")
+        parser.add_argument("--listen-to-all", action="store_true", help="If set, all personas hear all other statements.")
+        args = parser.parse_args()
 
-    run_llm_simulation(
-        model_name=args.model,
-        scenario_path=args.scenario,
-        personas_path=args.personas,
-        log_path=args.output_log,
-        listen_to_all=args.listen_to_all,
-        gui_mode=False
-    )
+        run_llm_simulation(
+            model_name=args.model,
+            scenario_path=args.scenario,
+            personas_path=args.personas,
+            log_path=args.output_log,
+            listen_to_all=args.listen_to_all,
+            gui_mode=False
+        )
+    else:
+        app = QApplication(sys.argv)
+        window = gui.App()
+        window.show()
+        sys.exit(app.exec())

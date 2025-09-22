@@ -8,7 +8,7 @@ def plot_influence_network(population: list[Persona], influence_matrix: sp.csr_m
     """
     Visualizes the influence network, saves it to a file, and optionally returns the figure.
     """
-    fig = plt.figure(figsize=(12, 12))
+    fig = plt.figure()
     G = nx.from_scipy_sparse_array(influence_matrix, create_using=nx.DiGraph())
     moods = [p.mood for p in population]
     node_colors = [plt.cm.coolwarm(mood + 0.5) for mood in moods]
@@ -17,8 +17,10 @@ def plot_influence_network(population: list[Persona], influence_matrix: sp.csr_m
     plt.title("Persona Influence Network")
 
     if return_fig:
+        fig.tight_layout()
         return fig
     else:
+        fig.tight_layout()
         plt.savefig(filename)
         plt.close(fig)
         logger.log(f"Influence network graph saved to {filename}")
@@ -28,7 +30,7 @@ def plot_mood_history(mood_history: list[float], logger, filename="mood_history.
     """
     Plots the average mood, saves it, and optionally returns the figure.
     """
-    fig = plt.figure(figsize=(10, 6))
+    fig = plt.figure()
     plt.plot(mood_history, marker='o', linestyle='-')
     plt.title("Average Population Mood Over Time")
     plt.xlabel("Time Step")
@@ -37,8 +39,10 @@ def plot_mood_history(mood_history: list[float], logger, filename="mood_history.
     plt.xticks(range(len(mood_history)))
 
     if return_fig:
+        fig.tight_layout()
         return fig
     else:
+        fig.tight_layout()
         plt.savefig(filename)
         plt.close(fig)
         logger.log(f"Mood history plot saved to {filename}")

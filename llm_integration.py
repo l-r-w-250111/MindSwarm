@@ -1,8 +1,25 @@
 import requests
 import json
+import os
 from persona import Persona
 
-OLLAMA_API_URL = "http://localhost:11434/api/generate"
+def get_ollama_api_url():
+    """Reads the base URL from config.json and returns the full generate endpoint."""
+    config_path = 'config.json'
+    base_url = "http://localhost:11434"
+
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                base_url = config.get('Ollama', {}).get('base_url', base_url)
+        except (json.JSONDecodeError, IOError):
+            # Keep default if file is invalid or unreadable
+            pass
+
+    return f"{base_url.rstrip('/')}/api/generate"
+
+OLLAMA_API_URL = get_ollama_api_url()
 
 def construct_prompt(persona: Persona, event: str, model_name: str, peer_context: list[tuple[float, str]] = None, persona_memory: str = "") -> str:
     """

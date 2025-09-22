@@ -47,30 +47,58 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Running a Simulation
+### 2. Configuration (Optional)
 
-You can run a simulation using the `main.py` script. It accepts several command-line arguments to customize the run.
+You can create a `config.json` file in the root directory to configure the application:
 
-```bash
-python3 persona_sim/main.py --model <model_name> --personas <path_to_personas.md> --scenario <path_to_scenario.md> --output-log <path_to_output.md>
+```json
+{
+  "Ollama": {
+    "base_url": "http://localhost:11434",
+    "default_model": "gemma3:12b"
+  }
+}
 ```
 
-**Arguments:**
+-   `base_url`: The base URL for your Ollama API server.
+-   `default_model`: The model that will be pre-filled in the GUI.
 
--   `--model`: (Required) The name of the Ollama model to use (e.g., `llama3`, `gemma3`).
--   `--personas`: (Optional) Path to the Markdown file containing persona definitions. Defaults to `personas.md`.
--   `--scenario`: (Optional) Path to the Markdown file containing the scenario. Defaults to `scenario.md`.
--   `--output-log`: (Optional) Path to save the unified output log file. Defaults to `simulation_log.md`.
--   `--listen-to-all`: (Optional) A flag that, if set, makes all personas hear all other personas' statements. By default, they only hear from their top influencers.
+### 3. Running the Application
 
-**Example:**
+This application has two modes: a graphical user interface (GUI) and a command-line interface (CLI).
 
-To run the included "Product Meeting" scenario:
+#### GUI Mode (Default)
+
+To launch the graphical user interface, run `main.py` with no arguments:
 ```bash
-python3 persona_sim/main.py --model llama3 --personas personas_meeting.md --scenario scenario_meeting.md --output-log log_product_meeting.md
+python3 main.py
+```
+The GUI allows you to select the model, persona files, and scenario files, and view the simulation results interactively.
+
+#### Command-Line Mode
+
+To run a simulation from the command line, provide any of the arguments listed below.
+
+```bash
+python3 main.py --model <model_name> --personas <path_to_personas.md> --scenario <path_to_scenario.md> --output-log <path_to_output.md>
 ```
 
-### 3. Output Files
+**CLI Arguments:**
+
+-   `--model`: The name of the Ollama model to use (e.g., `llama3`).
+-   `--personas`: Path to the Markdown file containing persona definitions.
+-   `--scenario`: Path to the Markdown file containing the scenario.
+-   `--output-log`: Path to save the unified output log file for CLI runs.
+-   `--listen-to-all`: A flag that, if set, makes all personas hear all other personas' statements.
+
+**CLI Example:**
+
+To run the included "Product Meeting" scenario from the CLI:
+```bash
+python3 main.py --model llama3 --personas experiment-1/personas.md --scenario experiment-1/scenario.md
+```
+
+### 4. Output Files
 
 After a successful run, the following files will be generated:
 
