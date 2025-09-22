@@ -55,21 +55,25 @@ class App(QMainWindow):
 
         # Model
         controls_grid_layout.addWidget(QLabel("Ollama Model:"), 0, 0)
-        default_model = 'gemma3:12b'
+
+        # Load config
+        config = {}
         config_path = 'config.json'
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r') as f:
                     config = json.load(f)
-                    default_model = config.get('Ollama', {}).get('default_model', default_model)
             except (json.JSONDecodeError, IOError):
-                pass
+                pass # Use defaults if file is invalid
+
+        default_model = config.get('Ollama', {}).get('default_model', 'gemma3:12b')
         self.model_input = QLineEdit(default_model)
         controls_grid_layout.addWidget(self.model_input, 0, 1, 1, 2)
 
         # Personas
         controls_grid_layout.addWidget(QLabel("Personas File:"), 1, 0)
-        self.personas_input = QLineEdit("experiment-1/personas.md")
+        default_personas = config.get('Defaults', {}).get('personas', 'personas.md')
+        self.personas_input = QLineEdit(default_personas)
         controls_grid_layout.addWidget(self.personas_input, 1, 1)
         self.browse_personas_btn = QPushButton("...")
         self.browse_personas_btn.clicked.connect(self.browse_personas)
@@ -77,7 +81,8 @@ class App(QMainWindow):
 
         # Scenario
         controls_grid_layout.addWidget(QLabel("Scenario File:"), 2, 0)
-        self.scenario_input = QLineEdit("experiment-1/scenario.md")
+        default_scenario = config.get('Defaults', {}).get('scenario', 'scenario.md')
+        self.scenario_input = QLineEdit(default_scenario)
         controls_grid_layout.addWidget(self.scenario_input, 2, 1)
         self.browse_scenario_btn = QPushButton("...")
         self.browse_scenario_btn.clicked.connect(self.browse_scenario)

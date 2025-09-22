@@ -56,12 +56,18 @@ You can create a `config.json` file in the root directory to configure the appli
   "Ollama": {
     "base_url": "http://localhost:11434",
     "default_model": "gemma3:12b"
+  },
+  "Defaults": {
+    "personas": "personas.md",
+    "scenario": "scenario.md"
   }
 }
 ```
 
 -   `base_url`: The base URL for your Ollama API server.
 -   `default_model`: The model that will be pre-filled in the GUI.
+-   `personas`: The default file path for the personas file.
+-   `scenario`: The default file path for the scenario file.
 
 ### 3. Running the Application
 

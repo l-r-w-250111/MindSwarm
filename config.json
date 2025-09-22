@@ -2,5 +2,9 @@
   "Ollama": {
     "base_url": "http://localhost:11434",
     "default_model": "gemma3:12b"
+  },
+  "Defaults": {
+    "personas": "personas.md",
+    "scenario": "scenario.md"
   }
 }
