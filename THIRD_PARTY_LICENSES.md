@@ -46,3 +46,12 @@ This project utilizes several open-source libraries. Below is a summary of the l
 - **Copyright:** Copyright 2024 Kenneth Reitz
 - **Summary:** A permissive license that allows for use, modification, and distribution. It also provides an express grant of patent rights from contributors to users.
 - **Full License:** [https://github.com/psf/requests/blob/main/LICENSE](https://github.com/psf/requests/blob/main/LICENSE)
+
+---
+
+### PySide6 (and shiboken6)
+
+- **License:** GNU Lesser General Public License (LGPL) version 3
+- **Copyright:** Copyright (C) 2024 The Qt Company Ltd.
+- **Summary:** The LGPL license allows this library to be used in proprietary applications, but any modifications to the library itself must be released under the same license.
+- **Full License:** [https://www.gnu.org/licenses/lgpl-3.0.html](https://www.gnu.org/licenses/lgpl-3.0.html)
