@@ -7,12 +7,18 @@ from collections import deque
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QGroupBox, QLabel, QLineEdit, QPushButton, QCheckBox, QTextEdit,
-    QSplitter, QTreeView, QHeaderView, QFileDialog, QMessageBox
+    QSplitter, QTreeView, QHeaderView, QFileDialog, QMessageBox, QTableWidget
 )
-from PySide6.QtCore import Qt, Signal, Slot, QObject
+from PySide6.QtCore import Qt, Signal, Slot, QObject, QItemSelectionModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 
-from main import run_llm_simulation, Logger
+from main import (
+    initialize_simulation,
+    run_simulation_step,
+    finalize_simulation,
+    SimulationState,
+    Logger
+)
 # Matplotlib integration with PySide6
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -20,7 +26,9 @@ from matplotlib.figure import Figure
 # --- Thread-safe Communication ---
 class Communicate(QObject):
     log_signal = Signal(str)
-    results_signal = Signal(dict)
+    initialization_done_signal = Signal(object) # Will emit SimulationState or None
+    step_done_signal = Signal(object)           # Will emit updated SimulationState
+    finalization_done_signal = Signal(object)   # Will emit final SimulationState
 
 class App(QMainWindow):
     def __init__(self):
@@ -31,9 +39,12 @@ class App(QMainWindow):
         # --- Thread-safe communication ---
         self.comm = Communicate()
         self.comm.log_signal.connect(self.handle_log_update)
-        self.comm.results_signal.connect(self.handle_results_update)
+        self.comm.initialization_done_signal.connect(self.handle_initialization_done)
+        self.comm.step_done_signal.connect(self.handle_step_done)
+        self.comm.finalization_done_signal.connect(self.handle_finalization_done)
 
-        self.simulation_data = None
+        self.simulation_data = []
+        self.sim_state = None
 
         # --- Main Layout ---
         main_widget = QWidget()
@@ -97,11 +108,20 @@ class App(QMainWindow):
         self.listen_all_checkbox = QCheckBox("Listen to All Personas")
         controls_grid_layout.addWidget(self.listen_all_checkbox, 4, 0, 1, 3)
 
-        # Run Button
-        self.run_button = QPushButton("Run Simulation")
-        self.run_button.setStyleSheet("font-size: 14px; font-weight: bold; padding: 5px;")
-        self.run_button.clicked.connect(self.run_simulation_thread)
-        controls_grid_layout.addWidget(self.run_button, 5, 0, 1, 3)
+        # --- Simulation Buttons ---
+        sim_button_layout = QHBoxLayout()
+        self.start_button = QPushButton("Start Simulation")
+        self.start_button.setStyleSheet("font-size: 14px; font-weight: bold; padding: 5px;")
+        self.start_button.clicked.connect(self.start_simulation_thread)
+        sim_button_layout.addWidget(self.start_button)
+
+        self.next_step_button = QPushButton("Next Step")
+        self.next_step_button.setStyleSheet("font-size: 14px; padding: 5px;")
+        self.next_step_button.clicked.connect(self.run_next_step_thread)
+        self.next_step_button.setEnabled(False)
+        sim_button_layout.addWidget(self.next_step_button)
+
+        controls_grid_layout.addLayout(sim_button_layout, 5, 0, 1, 3)
 
         # Live Log
         log_view_group = QGroupBox("Live Log")
@@ -115,47 +135,34 @@ class App(QMainWindow):
         output_frame = QSplitter(Qt.Vertical)
         splitter.addWidget(output_frame)
 
-        # Top part of output: Results
+        # Top part of output: Timeline and Interaction
         results_container = QWidget()
         results_layout = QVBoxLayout(results_container)
         output_frame.addWidget(results_container)
 
-        results_splitter = QSplitter(Qt.Horizontal)
-        results_layout.addWidget(results_splitter)
+        # Main timeline view
+        timeline_group = QGroupBox("Simulation Timeline")
+        timeline_layout = QVBoxLayout(timeline_group)
+        self.timeline_table = QTableWidget()
+        self.timeline_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.timeline_table.setWordWrap(True)
+        timeline_layout.addWidget(self.timeline_table)
+        results_layout.addWidget(timeline_group)
 
-        # Simulation Steps List
-        steps_group = QGroupBox("Simulation Steps")
-        steps_layout = QVBoxLayout(steps_group)
-        self.steps_tree = QTreeView()
-        self.steps_model = QStandardItemModel()
-        self.steps_model.setHorizontalHeaderLabels(['Step'])
-        self.steps_tree.setModel(self.steps_model)
-        self.steps_tree.selectionModel().selectionChanged.connect(self.on_step_select)
-        steps_layout.addWidget(self.steps_tree)
-        results_splitter.addWidget(steps_group)
+        # User Interaction
+        user_interaction_group = QGroupBox("Your Intervention")
+        user_interaction_layout = QHBoxLayout(user_interaction_group) # Use QHBoxLayout for better alignment
+        self.user_input_text = QTextEdit()
+        self.user_input_text.setPlaceholderText("Type your message here to influence the next step...")
+        self.user_input_text.setFixedHeight(60) # Make it a bit shorter
+        self.user_input_text.setEnabled(False)
+        user_interaction_layout.addWidget(self.user_input_text, 3) # Give more stretch to text edit
 
-        # Step Details
-        details_container = QWidget()
-        details_layout = QVBoxLayout(details_container)
-        results_splitter.addWidget(details_container)
-
-        event_group = QGroupBox("Event")
-        event_layout = QVBoxLayout(event_group)
-        self.event_text = QTextEdit()
-        self.event_text.setReadOnly(True)
-        self.event_text.setFixedHeight(80)
-        event_layout.addWidget(self.event_text)
-        details_layout.addWidget(event_group)
-
-        personas_group = QGroupBox("Persona Interactions")
-        personas_layout = QVBoxLayout(personas_group)
-        self.details_tree = QTreeView()
-        self.details_model = QStandardItemModel()
-        self.details_model.setHorizontalHeaderLabels(['ID', 'Profile Summary', 'Internal Thought', 'External Statement'])
-        self.details_tree.setModel(self.details_model)
-        self.details_tree.header().setSectionResizeMode(QHeaderView.Interactive)
-        personas_layout.addWidget(self.details_tree)
-        details_layout.addWidget(personas_group)
+        self.submit_user_input_btn = QPushButton("Submit as Next Event")
+        self.submit_user_input_btn.clicked.connect(self.on_submit_user_input)
+        self.submit_user_input_btn.setEnabled(False)
+        user_interaction_layout.addWidget(self.submit_user_input_btn, 1)
+        results_layout.addLayout(user_interaction_layout)
 
         # Bottom part of output: Visualizations
         plots_group = QGroupBox("Visualizations")
@@ -173,7 +180,7 @@ class App(QMainWindow):
 
         # Set initial sizes for the splitters
         splitter.setSizes([400, 1000])
-        output_frame.setSizes([600, 300])
+        output_frame.setSizes([700, 200]) # Give more space to the timeline
 
     def browse_personas(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Select Personas File", "", "Markdown files (*.md);;All files (*.*)")
@@ -185,105 +192,216 @@ class App(QMainWindow):
         if filename:
             self.scenario_input.setText(filename)
 
+    def on_submit_user_input(self):
+        user_text = self.user_input_text.toPlainText().strip()
+        if not user_text:
+            QMessageBox.warning(self, "Empty Input", "Please type a message to use as the next event.")
+            return
+
+        if not self.sim_state or self.sim_state.current_step >= self.sim_state.time_steps:
+            QMessageBox.warning(self, "Invalid State", "Cannot submit an intervention at this time.")
+            return
+
+        # Log the intervention
+        self.logger_callback(f"\n--- USER INTERVENTION ---")
+        self.logger_callback(f"Overriding next event with: \"{user_text}\"")
+
+        # Override the next event in the simulation state
+        self.sim_state.scenario[self.sim_state.current_step] = user_text
+
+        # Clear the input box
+        self.user_input_text.clear()
+
+        # Trigger the next step with the user's event
+        self.run_next_step_thread()
+
     @Slot(str)
     def handle_log_update(self, message):
         self.log_text_widget.append(message)
 
-    @Slot(dict)
-    def handle_results_update(self, results):
-        self.run_button.setEnabled(True)
-        self.run_button.setText("Run Simulation")
-
-        if results is None:
-            QMessageBox.critical(self, "Simulation Error", "The simulation failed. Check the Live Log for details.")
-            return
-
-        try:
-            self.populate_steps_list(results.get("structured_log", []))
-        except Exception as e:
-            QMessageBox.critical(self, "GUI Error", f"Failed to populate step list:\n{e}")
-            return
-
-        try:
-            self.draw_plots(results.get("population"), results.get("influence_matrix"), results.get("mood_history"))
-        except Exception as e:
-            QMessageBox.critical(self, "GUI Error", f"Failed to draw plots:\n{e}")
-            return
-
-        QMessageBox.information(self, "Success", "Simulation completed successfully!")
-
     def logger_callback(self, message):
         self.comm.log_signal.emit(message)
 
-    def simulation_worker(self, model, scenario, personas, log_path, listen_all):
+    # --- Simulation Step 1: Initialization ---
+    def simulation_initializer_worker(self):
         try:
-            results = run_llm_simulation(
-                model_name=model, scenario_path=scenario, personas_path=personas,
-                log_path=log_path, listen_to_all=listen_all,
-                gui_mode=True, logger_callback=self.logger_callback
+            state = initialize_simulation(
+                model_name=self.model_input.text(),
+                scenario_path=self.scenario_input.text(),
+                personas_path=self.personas_input.text(),
+                log_path=self.log_path_input.text(),
+                listen_to_all=self.listen_all_checkbox.isChecked(),
+                gui_mode=True,
+                logger_callback=self.logger_callback
             )
-            self.comm.results_signal.emit(results)
+            self.comm.initialization_done_signal.emit(state)
         except Exception as e:
-            self.comm.log_signal.emit(f"\n--- UNHANDLED EXCEPTION IN WORKER ---\n{e}")
-            self.comm.results_signal.emit(None)
+            self.comm.log_signal.emit(f"\n--- UNHANDLED EXCEPTION IN INITIALIZER ---\n{e}")
+            self.comm.initialization_done_signal.emit(None)
 
-    def run_simulation_thread(self):
-        self.run_button.setEnabled(False)
-        self.run_button.setText("Running...")
+    def start_simulation_thread(self):
+        self.start_button.setEnabled(False)
+        self.start_button.setText("Initializing...")
+        self.next_step_button.setEnabled(False)
         self.clear_results()
 
-        sim_thread = threading.Thread(
-            target=self.simulation_worker,
-            args=(
-                self.model_input.text(), self.scenario_input.text(),
-                self.personas_input.text(), self.log_path_input.text(),
-                self.listen_all_checkbox.isChecked()
-            )
-        )
-        sim_thread.daemon = True
-        sim_thread.start()
+        init_thread = threading.Thread(target=self.simulation_initializer_worker)
+        init_thread.daemon = True
+        init_thread.start()
 
+    @Slot(object)
+    def handle_initialization_done(self, state):
+        if state is None:
+            QMessageBox.critical(self, "Initialization Error", "The simulation failed to initialize. Check the Live Log for details.")
+            self.start_button.setEnabled(True)
+            self.start_button.setText("Start Simulation")
+            return
+
+        self.sim_state = state
+
+        # Setup Timeline Table
+        headers = ["Step", "Event"]
+        for p in self.sim_state.population:
+            headers.append(f"P{p.id}: {p.profile[:25]}...")
+        self.timeline_table.setColumnCount(len(headers))
+        self.timeline_table.setHorizontalHeaderLabels(headers)
+        self.timeline_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        self.timeline_table.setColumnWidth(0, 50) # Step
+        self.timeline_table.setColumnWidth(1, 250) # Event
+        for i in range(2, len(headers)):
+            self.timeline_table.setColumnWidth(i, 250) # Persona statements
+
+        self.start_button.setText("Running...") # Keep it disabled but show it's active
+        self.next_step_button.setEnabled(True)
+        self.user_input_text.setEnabled(True)
+        self.submit_user_input_btn.setEnabled(True)
+        QMessageBox.information(self, "Ready", "Simulation initialized. Press 'Next Step' or enter your own event to begin.")
+
+    # --- Simulation Step 2: Step-by-Step Execution ---
+    def simulation_step_worker(self):
+        try:
+            updated_state = run_simulation_step(self.sim_state)
+            self.comm.step_done_signal.emit(updated_state)
+        except Exception as e:
+            self.comm.log_signal.emit(f"\n--- UNHANDLED EXCEPTION IN STEP WORKER ---\n{e}")
+            self.comm.step_done_signal.emit(None)
+
+    def run_next_step_thread(self):
+        self.next_step_button.setEnabled(False)
+        self.user_input_text.setEnabled(False)
+        self.submit_user_input_btn.setEnabled(False)
+        step_thread = threading.Thread(target=self.simulation_step_worker)
+        step_thread.daemon = True
+        step_thread.start()
+
+    @Slot(object)
+    def handle_step_done(self, state):
+        if state is None:
+            QMessageBox.critical(self, "Step Error", "A step failed to execute. Check the Live Log for details.")
+            # Reset UI to a safe state
+            self.start_button.setEnabled(True)
+            self.start_button.setText("Start Simulation")
+            self.next_step_button.setEnabled(False)
+            self.user_input_text.setEnabled(False)
+            self.submit_user_input_btn.setEnabled(False)
+            return
+
+        self.sim_state = state
+        self.update_step_display()
+
+        if self.sim_state.current_step >= self.sim_state.time_steps:
+            self.next_step_button.setEnabled(False)
+            self.next_step_button.setText("Finished")
+            self.user_input_text.setEnabled(False)
+            self.submit_user_input_btn.setEnabled(False)
+            self.run_finalization_thread()
+        else:
+            self.next_step_button.setEnabled(True)
+            self.user_input_text.setEnabled(True)
+            self.submit_user_input_btn.setEnabled(True)
+
+    # --- Simulation Step 3: Finalization ---
+    def simulation_finalizer_worker(self):
+        try:
+            finalize_simulation(self.sim_state)
+            self.comm.finalization_done_signal.emit(self.sim_state)
+        except Exception as e:
+            self.comm.log_signal.emit(f"\n--- UNHANDLED EXCEPTION IN FINALIZER ---\n{e}")
+            self.comm.finalization_done_signal.emit(None)
+
+    def run_finalization_thread(self):
+        self.start_button.setText("Finalizing...")
+        final_thread = threading.Thread(target=self.simulation_finalizer_worker)
+        final_thread.daemon = True
+        final_thread.start()
+
+    @Slot(object)
+    def handle_finalization_done(self, state):
+        if state is None:
+            QMessageBox.critical(self, "Finalization Error", "Failed to finalize simulation or draw plots.")
+        else:
+            try:
+                self.draw_plots(state.population, state.influence_matrix, state.mood_history)
+                QMessageBox.information(self, "Success", "Simulation completed successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "GUI Error", f"Failed to draw plots:\n{e}")
+
+        # Reset for next run
+        self.start_button.setEnabled(True)
+        self.start_button.setText("Start Simulation")
+        self.next_step_button.setText("Next Step")
+        self.next_step_button.setEnabled(False)
+        self.user_input_text.setEnabled(False)
+        self.submit_user_input_btn.setEnabled(False)
+        self.sim_state = None
+
+    # --- GUI Update Logic ---
     def clear_results(self):
         self.log_text_widget.clear()
-        self.steps_model.clear()
-        self.steps_model.setHorizontalHeaderLabels(['Step'])
-        self.details_model.clear()
-        self.details_model.setHorizontalHeaderLabels(['ID', 'Profile Summary', 'Internal Thought', 'External Statement'])
-        self.event_text.clear()
+
+        # Clear timeline table
+        self.timeline_table.setRowCount(0)
+        self.timeline_table.setColumnCount(0)
+        self.timeline_table.setHorizontalHeaderLabels([])
+
+        # Clear plots
         self.fig_net.clear()
         self.canvas_net.draw()
         self.fig_mood.clear()
         self.canvas_mood.draw()
 
-    def populate_steps_list(self, simulation_data):
-        self.simulation_data = simulation_data
-        for i, step_data in enumerate(simulation_data):
-            item = QStandardItem(f"Step {step_data['step']}")
-            item.setData(i, Qt.UserRole)
-            self.steps_model.appendRow(item)
+        # Reset data and user input
+        self.simulation_data = []
+        self.user_input_text.clear()
+        self.user_input_text.setEnabled(False)
+        self.submit_user_input_btn.setEnabled(False)
 
-    def on_step_select(self, selected, deselected):
-        if not selected.indexes():
-            return
-        index = selected.indexes()[0]
-        step_index = self.steps_model.itemFromIndex(index).data(Qt.UserRole)
+    def update_step_display(self):
+        from PySide6.QtWidgets import QTableWidgetItem
+        # The latest step's data is the last one in the structured_log
+        step_data = self.sim_state.structured_log[-1]
 
-        if self.simulation_data and 0 <= step_index < len(self.simulation_data):
-            step_data = self.simulation_data[step_index]
-            self.event_text.setText(step_data.get('event', ''))
+        row_position = self.timeline_table.rowCount()
+        self.timeline_table.insertRow(row_position)
 
-            self.details_model.clear()
-            self.details_model.setHorizontalHeaderLabels(['ID', 'Profile Summary', 'Internal Thought', 'External Statement'])
-            for p_data in step_data.get('personas', []):
-                id_item = QStandardItem(str(p_data.get('id', '')))
-                profile_summary = p_data.get('profile', '')[:50] + '...'
-                summary_item = QStandardItem(profile_summary)
-                thought_item = QStandardItem(p_data.get('thought', ''))
-                statement_item = QStandardItem(p_data.get('statement', ''))
-                self.details_model.appendRow([id_item, summary_item, thought_item, statement_item])
+        # Step and Event
+        self.timeline_table.setItem(row_position, 0, QTableWidgetItem(str(step_data['step'])))
+        self.timeline_table.setItem(row_position, 1, QTableWidgetItem(step_data['event']))
 
-            for i in range(self.details_model.columnCount()):
-                self.details_tree.resizeColumnToContents(i)
+        # Persona Statements
+        persona_statements = {p['id']: p['statement'] for p in step_data['personas']}
+        persona_thoughts = {p['id']: p['thought'] for p in step_data['personas']}
+
+        for col, persona in enumerate(self.sim_state.population, start=2):
+            statement = persona_statements.get(persona.id, "N/A")
+            item = QTableWidgetItem(statement)
+
+            thought = persona_thoughts.get(persona.id, "")
+            item.setToolTip(f"Internal Thought:\n{thought}")
+            self.timeline_table.setItem(row_position, col, item)
+
+        self.timeline_table.resizeRowsToContents()
+        self.timeline_table.scrollToBottom()
 
     def draw_plots(self, population, influence_matrix, mood_history):
         from visualize import plot_influence_network, plot_mood_history # Local import to avoid circular dependency issues
