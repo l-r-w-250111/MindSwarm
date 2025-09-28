@@ -1,7 +1,7 @@
 {
   "Ollama": {
     "base_url": "http://localhost:11434",
-    "default_model": "gemma3:12b"
+    "default_model": "gpt-oss:20b"
   },
   "Defaults": {
     "personas": "personas.md",
