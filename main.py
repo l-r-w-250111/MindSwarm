@@ -133,12 +133,15 @@ def initialize_simulation(model_name: str, scenario_path: str, personas_path: st
     logger.log("\n--- Initialization Complete ---")
     return state
 
-def run_simulation_step(state: SimulationState):
-    """Runs a single step of the simulation."""
+def run_simulation_step(state: SimulationState, user_utterance: str = None):
+    """Runs a single step of the simulation, optionally including a user utterance."""
     logger = state.logger
     step = state.current_step
     event = state.scenario[step]
     logger.log(f"\n--- Time Step {step + 1}/{state.time_steps}: EVENT: {event} ---\n")
+
+    if user_utterance:
+        logger.log(f"--- USER UTTERANCE: \"{user_utterance}\" ---")
 
     step_persona_data = []
     statements_this_step = {}
@@ -147,6 +150,11 @@ def run_simulation_step(state: SimulationState):
     for persona in state.population:
         memory = state.persona_self_memories[persona.id]
         peer_context = []
+
+        # Add user's utterance to the context for everyone
+        if user_utterance:
+            peer_context.append((1.0, f"A user watching the simulation says: \"{user_utterance}\""))
+
         if state.listen_to_all:
             for other_persona in state.population:
                 if other_persona.id == persona.id: continue

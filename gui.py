@@ -151,7 +151,7 @@ class App(QMainWindow):
 
         # User Interaction
         user_interaction_group = QGroupBox("Your Intervention")
-        user_interaction_layout = QHBoxLayout(user_interaction_group) # Use QHBoxLayout for better alignment
+        user_interaction_layout = QHBoxLayout() # Create layout without a parent
         self.user_input_text = QTextEdit()
         self.user_input_text.setPlaceholderText("Type your message here to influence the next step...")
         self.user_input_text.setFixedHeight(60) # Make it a bit shorter
@@ -162,7 +162,9 @@ class App(QMainWindow):
         self.submit_user_input_btn.clicked.connect(self.on_submit_user_input)
         self.submit_user_input_btn.setEnabled(False)
         user_interaction_layout.addWidget(self.submit_user_input_btn, 1)
-        results_layout.addLayout(user_interaction_layout)
+
+        user_interaction_group.setLayout(user_interaction_layout) # Set layout on the group box
+        results_layout.addWidget(user_interaction_group) # Add the group box to the main layout
 
         # Bottom part of output: Visualizations
         plots_group = QGroupBox("Visualizations")
