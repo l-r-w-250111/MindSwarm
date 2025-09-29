@@ -4,6 +4,10 @@ This project is a prototype for a sophisticated social simulation platform that 
 
 It allows users to define a set of personas and a multi-step scenario in simple Markdown files, and then simulates how these personas would think, speak, and influence each other in response to the unfolding events.
 
+## Project Status
+
+**Disclaimer:** This is an experimental prototype. The simulation logic, models, and features are subject to change. It is intended for research and exploration purposes.
+
 ## Core Concepts
 
 This simulation is built on several key concepts that evolved through iterative development:
@@ -16,15 +20,11 @@ This simulation is built on several key concepts that evolved through iterative 
 
 4.  **Data-Driven Configuration:** The simulation is highly flexible. Both the personas and the multi-step scenarios are loaded from external `.md` files, allowing users to easily create and run new simulations without touching the core Python code.
 
-## Features
+## License
 
--   **Dynamic Simulation Setup:** Automatically determines the most relevant ideological axes for a given scenario.
--   **LLM-Powered Personas:** Generates nuanced thoughts and public statements for each agent.
--   **Hybrid State Management:** Personas have both a qualitative state (thoughts, statements) and a quantitative state (numerical vectors, mood) that evolve over time.
--   **Influence Network:** Calculates a sparse influence matrix based on the similarity of personas' numerical states.
--   **Flexible Configuration:** Define personas and scenarios in simple Markdown files.
--   **Comprehensive Logging:** Generates a detailed Markdown log of the entire simulation, mirroring the console output for easy analysis.
--   **Visualization:** Creates plots of the final influence network and the average mood over time.
+This project is licensed under the terms of the `LICENSE` file.
+
+The third-party libraries used in this project are documented in the `THIRD_PARTY_LICENSES.md` file, which includes their respective licenses.
 
 ## How to Use
 
@@ -32,7 +32,7 @@ This simulation is built on several key concepts that evolved through iterative 
 
 First, ensure you have a local Ollama server running. You can find installation instructions here: [https://ollama.com/](https://ollama.com/)
 
-Pull the model you wish to use, for example:
+Pull a model you wish to use, for example:
 ```bash
 ollama pull llama3
 ```
@@ -63,27 +63,33 @@ You can create a `config.json` file in the root directory to configure the appli
   }
 }
 ```
-
 -   `base_url`: The base URL for your Ollama API server.
--   `default_model`: The model that will be pre-filled in the GUI.
+-   `default_model`: The model that will be pre-filled in the GUIs.
 -   `personas`: The default file path for the personas file.
 -   `scenario`: The default file path for the scenario file.
 
+
 ### 3. Running the Application
 
-This application has two modes: a graphical user interface (GUI) and a command-line interface (CLI).
+This application has three modes: a Streamlit GUI (recommended), a PySide6 GUI, and a command-line interface (CLI).
 
-#### GUI Mode (Default)
+#### Streamlit GUI (Web Interface)
 
-To launch the graphical user interface, run `main.py` with no arguments:
+The Streamlit interface provides a modern, web-based experience. To launch it, run:
+```bash
+streamlit run app.py
+```
+
+#### PySide6 GUI (Desktop Application)
+
+To launch the desktop graphical user interface, run `main.py` with no arguments:
 ```bash
 python3 main.py
 ```
-The GUI allows you to select the model, persona files, and scenario files, and view the simulation results interactively.
 
 #### Command-Line Mode
 
-To run a simulation from the command line, provide any of the arguments listed below.
+To run a simulation directly from the command line, provide any of the arguments listed below.
 
 ```bash
 python3 main.py --model <model_name> --personas <path_to_personas.md> --scenario <path_to_scenario.md> --output-log <path_to_output.md>
@@ -97,20 +103,25 @@ python3 main.py --model <model_name> --personas <path_to_personas.md> --scenario
 -   `--output-log`: Path to save the unified output log file for CLI runs.
 -   `--listen-to-all`: A flag that, if set, makes all personas hear all other personas' statements.
 
-**CLI Example:**
+**CLI Examples:**
 
-To run the included "Product Meeting" scenario from the CLI:
+To run the "Community Center Sale" scenario:
 ```bash
 python3 main.py --model llama3 --personas experiment-1/personas.md --scenario experiment-1/scenario.md
 ```
 
+To run the "Product Meeting" scenario:
+```bash
+python3 main.py --model llama3 --personas experiment-2/personas.md --scenario experiment-2/scenario.md
+```
+
 ### 4. Output Files
 
-After a successful run, the following files will be generated:
+After a successful CLI run, the following files will be generated:
 
--   **`[output-log].md`:** A comprehensive log of the entire simulation, mirroring the terminal output.
--   **`influence_network.png`:** A graph visualizing the final influence network between personas.
--   **`mood_history.png`:** A line plot showing the average mood of the population over the simulation's time steps.
+-   **`[output-log].md`:** A comprehensive log of the entire simulation.
+-   **`influence_network.png`:** A graph visualizing the final influence network.
+-   **`mood_history.png`:** A line plot showing the average population mood over time.
 
 ## Customization
 

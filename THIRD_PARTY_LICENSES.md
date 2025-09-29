@@ -1,57 +1,160 @@
 # Third-Party Licenses
 
-This project utilizes several open-source libraries. Below is a summary of the libraries and their licenses.
+This project utilizes the following third-party libraries. All libraries are used under licenses that permit free commercial use.
 
----
+## Core Libraries
 
-### NumPy
+- **streamlit**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/streamlit/streamlit/blob/develop/LICENSE](https://github.com/streamlit/streamlit/blob/develop/LICENSE)
 
-- **License:** BSD 3-Clause License
-- **Copyright:** Copyright (c) 2005-2024, NumPy Developers.
-- **Summary:** Permissive license that allows for redistribution and use in source and binary forms, with or without modification, provided that certain conditions are met (retention of copyright notice, list of conditions, and disclaimer).
-- **Full License:** [https://github.com/numpy/numpy/blob/main/LICENSE.txt](https://github.com/numpy/numpy/blob/main/LICENSE.txt)
+- **PySide6**
+  - **License:** LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+  - **URL:** [https://github.com/qtproject/pyside-pyside-setup/blob/dev/LICENSES/LGPL-3.0-only.txt](https://github.com/qtproject/pyside-pyside-setup/blob/dev/LICENSES/LGPL-3.0-only.txt)
 
----
+## Common Dependencies
 
-### SciPy
-
-- **License:** BSD 3-Clause License
-- **Copyright:** Copyright (c) 2001-2002 Enthought, Inc. 2003-2024, SciPy Developers.
-- **Summary:** Similar to the NumPy license, allowing for broad use and redistribution with attribution.
-- **Full License:** [https://github.com/scipy/scipy/blob/main/LICENSE.txt](https://github.com/scipy/scipy/blob/main/LICENSE.txt)
-
----
-
-### Matplotlib
-
-- **License:** PSF (Python Software Foundation) License Agreement
-- **Copyright:** Copyright (c) 2002-2012 John D. Hunter; All Rights Reserved
-- **Summary:** A permissive, GPL-compatible license that allows for modification and redistribution of the software.
-- **Full License:** [https://github.com/matplotlib/matplotlib/blob/main/LICENSE/LICENSE](https://github.com/matplotlib/matplotlib/blob/main/LICENSE/LICENSE)
-
----
-
-### NetworkX
-
-- **License:** BSD 3-Clause License
-- **Copyright:** Copyright (c) 2004-2024, NetworkX Developers
-- **Summary:** A permissive license that allows for redistribution and use with attribution.
-- **Full License:** [https://github.com/networkx/networkx/blob/main/LICENSE.txt](https://github.com/networkx/networkx/blob/main/LICENSE.txt)
-
----
-
-### Requests
-
-- **License:** Apache 2.0 License
-- **Copyright:** Copyright 2024 Kenneth Reitz
-- **Summary:** A permissive license that allows for use, modification, and distribution. It also provides an express grant of patent rights from contributors to users.
-- **Full License:** [https://github.com/psf/requests/blob/main/LICENSE](https://github.com/psf/requests/blob/main/LICENSE)
-
----
-
-### PySide6 (and shiboken6)
-
-- **License:** GNU Lesser General Public License (LGPL) version 3
-- **Copyright:** Copyright (C) 2024 The Qt Company Ltd.
-- **Summary:** The LGPL license allows this library to be used in proprietary applications, but any modifications to the library itself must be released under the same license.
-- **Full License:** [https://www.gnu.org/licenses/lgpl-3.0.html](https://www.gnu.org/licenses/lgpl-3.0.html)
+- **altair**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/vega/altair/blob/main/LICENSE](https://github.com/vega/altair/blob/main/LICENSE)
+- **attrs**
+  - **License:** MIT
+  - **URL:** [https://github.com/python-attrs/attrs/blob/main/LICENSE](https://github.com/python-attrs/attrs/blob/main/LICENSE)
+- **blinker**
+  - **License:** MIT
+  - **URL:** [https://github.com/pallets-eco/blinker/blob/main/LICENSE.rst](https://github.com/pallets-eco/blinker/blob/main/LICENSE.rst)
+- **cachetools**
+  - **License:** MIT
+  - **URL:** [https://github.com/tkem/cachetools/blob/master/LICENSE](https://github.com/tkem/cachetools/blob/master/LICENSE)
+- **certifi**
+  - **License:** MPL-2.0
+  - **URL:** [https://github.com/certifi/python-certifi/blob/master/LICENSE](https://github.com/certifi/python-certifi/blob/master/LICENSE)
+- **charset-normalizer**
+  - **License:** MIT
+  - **URL:** [https://github.com/jawah/charset_normalizer/blob/main/LICENSE](https://github.com/jawah/charset_normalizer/blob/main/LICENSE)
+- **click**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/pallets/click/blob/main/LICENSE.rst](https://github.com/pallets/click/blob/main/LICENSE.rst)
+- **contourpy**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/contourpy/contourpy/blob/main/LICENSE](https://github.com/contourpy/contourpy/blob/main/LICENSE)
+- **cycler**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/matplotlib/cycler/blob/main/LICENSE](https://github.com/matplotlib/cycler/blob/main/LICENSE)
+- **fonttools**
+  - **License:** MIT
+  - **URL:** [https://github.com/fonttools/fonttools/blob/main/LICENSE](https://github.com/fonttools/fonttools/blob/main/LICENSE)
+- **gitdb**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/gitpython-developers/gitdb/blob/main/LICENSE](https://github.com/gitpython-developers/gitdb/blob/main/LICENSE)
+- **GitPython**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/gitpython-developers/GitPython/blob/main/LICENSE](https://github.com/gitpython-developers/GitPython/blob/main/LICENSE)
+- **greenlet**
+  - **License:** MIT
+  - **URL:** [https://github.com/python-greenlet/greenlet/blob/main/LICENSE](https://github.com/python-greenlet/greenlet/blob/main/LICENSE)
+- **idna**
+  - **License:** BSD-like
+  - **URL:** [https://github.com/kjd/idna/blob/master/LICENSE.rst](https://github.com/kjd/idna/blob/master/LICENSE.rst)
+- **Jinja2**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/pallets/jinja/blob/main/LICENSE.rst](https://github.com/pallets/jinja/blob/main/LICENSE.rst)
+- **jsonschema**
+  - **License:** MIT
+  - **URL:** [https://github.com/python-jsonschema/jsonschema/blob/main/COPYING](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING)
+- **jsonschema-specifications**
+  - **License:** MIT
+  - **URL:** [https://github.com/python-jsonschema/jsonschema-specifications/blob/main/COPYING](https://github.com/python-jsonschema/jsonschema-specifications/blob/main/COPYING)
+- **kiwisolver**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/nucleic/kiwi/blob/main/LICENSE](https://github.com/nucleic/kiwi/blob/main/LICENSE)
+- **MarkupSafe**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/pallets/markupsafe/blob/main/LICENSE.rst](https://github.com/pallets/markupsafe/blob/main/LICENSE.rst)
+- **matplotlib**
+  - **License:** PSF-like
+  - **URL:** [https://github.com/matplotlib/matplotlib/blob/main/LICENSE/LICENSE](https://github.com/matplotlib/matplotlib/blob/main/LICENSE/LICENSE)
+- **narwhals**
+  - **License:** MIT
+  - **URL:** [https://github.com/narwhals-dev/narwhals/blob/main/LICENSE](https://github.com/narwhals-dev/narwhals/blob/main/LICENSE)
+- **networkx**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/networkx/networkx/blob/main/LICENSE.txt](https://github.com/networkx/networkx/blob/main/LICENSE.txt)
+- **numpy**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/numpy/numpy/blob/main/LICENSE.txt](https://github.com/numpy/numpy/blob/main/LICENSE.txt)
+- **packaging**
+  - **License:** Apache-2.0 OR BSD-2-Clause
+  - **URL:** [https://github.com/pypa/packaging/blob/main/LICENSE](https://github.com/pypa/packaging/blob/main/LICENSE)
+- **pandas**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/pandas-dev/pandas/blob/main/LICENSE](https://github.com/pandas-dev/pandas/blob/main/LICENSE)
+- **pillow**
+  - **License:** MIT-CMU
+  - **URL:** [https://github.com/python-pillow/Pillow/blob/main/LICENSE](https://github.com/python-pillow/Pillow/blob/main/LICENSE)
+- **playwright**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/microsoft/playwright-python/blob/main/LICENSE](https://github.com/microsoft/playwright-python/blob/main/LICENSE)
+- **protobuf**
+  - **License:** 3-Clause BSD License
+  - **URL:** [https://github.com/protocolbuffers/protobuf/blob/main/LICENSE](https://github.com/protocolbuffers/protobuf/blob/main/LICENSE)
+- **pyarrow**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/apache/arrow/blob/main/LICENSE.txt](https://github.com/apache/arrow/blob/main/LICENSE.txt)
+- **pydeck**
+  - **License:** MIT
+  - **URL:** [https://github.com/visgl/deck.gl/blob/master/bindings/pydeck/LICENSE](https://github.com/visgl/deck.gl/blob/master/bindings/pydeck/LICENSE)
+- **pyee**
+  - **License:** MIT
+  - **URL:** [https://github.com/jfhbrook/pyee/blob/main/LICENSE](https://github.com/jfhbrook/pyee/blob/main/LICENSE)
+- **pyparsing**
+  - **License:** MIT
+  - **URL:** [https://github.com/pyparsing/pyparsing/blob/main/LICENSE](https://github.com/pyparsing/pyparsing/blob/main/LICENSE)
+- **python-dateutil**
+  - **License:** Apache-2.0 / BSD-3-Clause
+  - **URL:** [https://github.com/dateutil/dateutil/blob/master/LICENSE](https://github.com/dateutil/dateutil/blob/master/LICENSE)
+- **pytz**
+  - **License:** MIT
+  - **URL:** [https://github.com/stub42/pytz/blob/main/LICENSE.txt](https://github.com/stub42/pytz/blob/main/LICENSE.txt)
+- **referencing**
+  - **License:** MIT
+  - **URL:** [https://github.com/python-jsonschema/referencing/blob/main/COPYING](https://github.com/python-jsonschema/referencing/blob/main/COPYING)
+- **requests**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/psf/requests/blob/main/LICENSE](https://github.com/psf/requests/blob/main/LICENSE)
+- **rpds-py**
+  - **License:** MIT
+  - **URL:** [https://github.com/crate-py/rpds/blob/main/LICENSE](https://github.com/crate-py/rpds/blob/main/LICENSE)
+- **scipy**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/scipy/scipy/blob/main/LICENSE.txt](https://github.com/scipy/scipy/blob/main/LICENSE.txt)
+- **shiboken6**
+  - **License:** LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+  - **URL:** [https://github.com/qtproject/pyside-pyside-setup/blob/dev/LICENSES/LGPL-3.0-only.txt](https://github.com/qtproject/pyside-pyside-setup/blob/dev/LICENSES/LGPL-3.0-only.txt)
+- **six**
+  - **License:** MIT
+  - **URL:** [https://github.com/benjaminp/six/blob/main/LICENSE](https://github.com/benjaminp/six/blob/main/LICENSE)
+- **smmap**
+  - **License:** BSD-3-Clause
+  - **URL:** [https://github.com/gitpython-developers/smmap/blob/main/LICENSE](https://github.com/gitpython-developers/smmap/blob/main/LICENSE)
+- **tenacity**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/jd/tenacity/blob/main/LICENSE](https://github.com/jd/tenacity/blob/main/LICENSE)
+- **toml**
+  - **License:** MIT
+  - **URL:** [https://github.com/uiri/toml/blob/master/LICENSE](https://github.com/uiri/toml/blob/master/LICENSE)
+- **tornado**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/tornadoweb/tornado/blob/master/LICENSE](https://github.com/tornadoweb/tornado/blob/master/LICENSE)
+- **typing_extensions**
+  - **License:** PSF-2.0
+  - **URL:** [https://github.com/python/typing/blob/master/typing_extensions/LICENSE](https://github.com/python/typing/blob/master/typing_extensions/LICENSE)
+- **tzdata**
+  - **License:** Apache-2.0 / MIT
+  - **URL:** [https://github.com/python/tzdata/blob/main/LICENSE](https://github.com/python/tzdata/blob/main/LICENSE)
+- **urllib3**
+  - **License:** MIT
+  - **URL:** [https://github.com/urllib3/urllib3/blob/main/LICENSE.txt](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt)
+- **watchdog**
+  - **License:** Apache-2.0
+  - **URL:** [https://github.com/gorakhargosh/watchdog/blob/master/LICENSE](https://github.com/gorakhargosh/watchdog/blob/master/LICENSE)
