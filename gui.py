@@ -3,6 +3,7 @@ import json
 import os
 import threading
 from collections import deque
+import numpy as np
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
@@ -120,6 +121,12 @@ class App(QMainWindow):
         self.next_step_button.clicked.connect(self.run_next_step_thread)
         self.next_step_button.setEnabled(False)
         sim_button_layout.addWidget(self.next_step_button)
+
+        self.save_button = QPushButton("Save Results")
+        self.save_button.setStyleSheet("font-size: 14px;")
+        self.save_button.clicked.connect(self.save_results)
+        self.save_button.setEnabled(False)
+        sim_button_layout.addWidget(self.save_button)
         
         controls_grid_layout.addLayout(sim_button_layout, 5, 0, 1, 3)
 
@@ -194,6 +201,42 @@ class App(QMainWindow):
         if filename:
             self.scenario_input.setText(filename)
 
+    def save_results(self):
+        if not self.sim_state or not self.sim_state.structured_log:
+            QMessageBox.warning(self, "No Data", "There is no simulation data to save.")
+            return
+
+        # Propose a filename
+        default_log_path = self.log_path_input.text()
+        if default_log_path.endswith('.md'):
+            proposed_filename = default_log_path[:-3] + "_full_log.json"
+        else:
+            proposed_filename = "simulation_log.json"
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Simulation Log",
+            proposed_filename,
+            "JSON Files (*.json);;All Files (*)"
+        )
+
+        if filename:
+            try:
+                with open(filename, 'w') as f:
+                    # Use a custom serializer to handle numpy arrays if they exist
+                    class NumpyEncoder(json.JSONEncoder):
+                        def default(self, obj):
+                            if isinstance(obj, (np.integer, np.floating, np.bool_)):
+                                return obj.item()
+                            if isinstance(obj, np.ndarray):
+                                return obj.tolist()
+                            return super(NumpyEncoder, self).default(obj)
+
+                    json.dump(self.sim_state.structured_log, f, indent=4, cls=NumpyEncoder)
+                QMessageBox.information(self, "Success", f"Full simulation log saved to {filename}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save file: {e}")
+
     def on_submit_user_input(self):
         user_text = self.user_input_text.toPlainText().strip()
         if not user_text:
@@ -242,9 +285,12 @@ class App(QMainWindow):
             self.comm.initialization_done_signal.emit(None)
 
     def start_simulation_thread(self):
+        # Reset state from previous run *before* starting a new one
+        self.sim_state = None
         self.start_button.setEnabled(False)
         self.start_button.setText("Initializing...")
         self.next_step_button.setEnabled(False)
+        self.save_button.setEnabled(False)
         self.clear_results()
 
         init_thread = threading.Thread(target=self.simulation_initializer_worker)
@@ -344,6 +390,7 @@ class App(QMainWindow):
         else:
             try:
                 self.draw_plots(state.population, state.influence_matrix, state.mood_history)
+                self.save_button.setEnabled(True)
                 QMessageBox.information(self, "Success", "Simulation completed successfully!")
             except Exception as e:
                 QMessageBox.critical(self, "GUI Error", f"Failed to draw plots:\n{e}")
@@ -355,7 +402,6 @@ class App(QMainWindow):
         self.next_step_button.setEnabled(False)
         self.user_input_text.setEnabled(False)
         self.submit_user_input_btn.setEnabled(False)
-        self.sim_state = None
 
     # --- GUI Update Logic ---
     def clear_results(self):

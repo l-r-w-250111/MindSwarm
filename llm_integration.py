@@ -145,6 +145,9 @@ def distill_state_from_thought(persona: Persona, thought: str, model_name: str, 
     """
     prompt = construct_distillation_prompt(persona, thought, axes)
     payload = {"model": model_name, "prompt": prompt, "stream": False, "format": "json"}
+    # Older models like gpt-oss may not support the 'format' parameter.
+    if "gpt-oss" in model_name:
+        del payload["format"]
     try:
         response = requests.post(OLLAMA_API_URL, json=payload, timeout=300)
         response.raise_for_status()
@@ -191,6 +194,9 @@ def generate_ideological_axes(profiles: list[str], first_event: str, model_name:
     """
     prompt = construct_axis_generation_prompt(profiles, first_event)
     payload = {"model": model_name, "prompt": prompt, "stream": False, "format": "json"}
+    # Older models like gpt-oss may not support the 'format' parameter.
+    if "gpt-oss" in model_name:
+        del payload["format"]
     logger.log("--- Generating Ideological Axes ---")
     try:
         response = requests.post(OLLAMA_API_URL, json=payload, timeout=300)
@@ -240,6 +246,9 @@ def initialize_persona_vector(profile: str, axes: dict, model_name: str, logger)
     axis_1_name, axis_2_name = axes.get("axis_1", "default_axis_1"), axes.get("axis_2", "default_axis_2")
     prompt = construct_vector_initialization_prompt(profile, axes)
     payload = {"model": model_name, "prompt": prompt, "stream": False, "format": "json"}
+    # Older models like gpt-oss may not support the 'format' parameter.
+    if "gpt-oss" in model_name:
+        del payload["format"]
     try:
         response = requests.post(OLLAMA_API_URL, json=payload, timeout=300)
         response.raise_for_status()
