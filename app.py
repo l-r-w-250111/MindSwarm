@@ -27,79 +27,6 @@ def load_config():
             return {}
     return {}
 
-def generate_timeline_html(structured_log, population):
-    """Generates an HTML table from the structured log with tooltips."""
-    html = """
-    <style>
-        .sim-tooltip {
-            position: relative;
-            display: inline-block;
-            cursor: help;
-        }
-        .sim-tooltip .sim-tooltiptext {
-            visibility: hidden;
-            width: 350px;
-            background-color: #333;
-            color: #fff;
-            text-align: left;
-            border-radius: 6px;
-            padding: 8px;
-            position: absolute;
-            z-index: 9999;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -175px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 12px;
-            font-weight: normal;
-            white-space: pre-wrap;
-        }
-        .sim-tooltip:hover .sim-tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        .sim-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .sim-table th, .sim-table td {
-            border: 1px solid #444;
-            padding: 8px;
-            text-align: left;
-            vertical-align: top;
-        }
-        .sim-table th {
-            background-color: #262730;
-            color: white;
-        }
-    </style>
-    """
-    html += '<table class="sim-table"><thead><tr>'
-    html += "<th>Step</th><th>Event</th><th>User</th>"
-    for p in population:
-        header_text = f"Persona {p.id}"
-        tooltip_text = p.profile.replace('"', '&quot;').replace('\n', '<br>')
-        html += f'<th><div class="sim-tooltip">{header_text}<span class="sim-tooltiptext">{tooltip_text}</span></div></th>'
-    html += "</tr></thead><tbody>"
-
-    for step_data in structured_log:
-        html += "<tr>"
-        html += f"<td>{step_data['step']}</td>"
-        html += f"<td>{step_data['event']}</td>"
-        user_utterance = step_data.get('user_utterance', '')
-        html += f"<td>{user_utterance}</td>"
-        statements = {p['id']: p['statement'] for p in step_data['personas']}
-        thoughts = {p['id']: p['thought'] for p in step_data['personas']}
-        for p in population:
-            statement = statements.get(p.id, "")
-            thought = thoughts.get(p.id, "")
-            cell_tooltip = f"<b>Internal Thought:</b><br>{thought}".replace('"', '&quot;').replace('\n', '<br>')
-            html += f'<td><div class="sim-tooltip">{statement}<span class="sim-tooltiptext">{cell_tooltip}</span></div></td>'
-        html += "</tr>"
-    html += "</tbody></table>"
-    return html
-
 # --- Session State Initialization ---
 if 'sim_state' not in st.session_state:
     st.session_state.sim_state = None
@@ -109,13 +36,15 @@ if 'simulation_started' not in st.session_state:
     st.session_state.simulation_started = False
 if 'finalized' not in st.session_state:
     st.session_state.finalized = False
+if 'thought_vis' not in st.session_state:
+    st.session_state.thought_vis = {}
 
 # --- Sidebar Controls ---
 with st.sidebar:
     st.header("⚙️ Simulation Controls")
     config = load_config()
     st.subheader("LLM Configuration")
-    default_model = config.get('Ollama', {}).get('default_model', 'gemma3:12b')
+    default_model = config.get('Ollama', {}).get('default_model', 'gpt-oss:20b')
     model_name = st.text_input("Ollama Model", value=default_model, help="The name of the Ollama model to use.")
     st.subheader("Input Files")
     default_personas = config.get('Defaults', {}).get('personas', 'personas.md')
@@ -131,6 +60,7 @@ with st.sidebar:
         st.session_state.log_messages = []
         st.session_state.simulation_started = False
         st.session_state.finalized = False
+        st.session_state.thought_vis = {} # Reset thought visibility on new run
         def logger_callback(message):
             st.session_state.log_messages.append(message)
         with st.spinner("Initializing simulation..."):
@@ -144,7 +74,7 @@ with st.sidebar:
         else:
             st.session_state.sim_state = state
             st.session_state.simulation_started = True
-            st.rerun() 
+            st.rerun()
 
     if st.session_state.simulation_started:
         if st.button("⏹️ Reset Simulation", use_container_width=True):
@@ -152,7 +82,26 @@ with st.sidebar:
             st.session_state.log_messages = []
             st.session_state.simulation_started = False
             st.session_state.finalized = False
+            st.session_state.thought_vis = {}
             st.rerun()
+
+    if st.session_state.finalized:
+        st.markdown("---")
+        st.subheader("⬇️ Download Results")
+        # Convert structured_log to a JSON string for download
+        # Use a numpy-aware encoder if necessary, but here we'll just use default json
+        try:
+            json_string = json.dumps(st.session_state.sim_state.structured_log, indent=4)
+            st.download_button(
+                label="Download Full Log (JSON)",
+                data=json_string,
+                file_name="simulation_log.json",
+                mime="application/json",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Could not prepare JSON for download: {e}")
+
 
 # --- Main Page Layout ---
 if not st.session_state.simulation_started:
@@ -165,8 +114,8 @@ else:
             with st.spinner("Generating final plots..."):
                 finalize_simulation(state)
                 st.session_state.finalized = True
+                st.rerun() # Rerun to show download button and final state
         st.success("🎉 Simulation Complete!")
-        st.balloons()
     else:
         with st.form(key="step_form"):
             st.markdown(f"**Running Step {state.current_step + 1} of {state.time_steps}**")
@@ -186,13 +135,46 @@ if st.session_state.simulation_started:
     st.markdown("---")
     st.header("📊 Simulation Results")
     state = st.session_state.sim_state
+
+    # Persona Profiles
+    st.subheader("👥 Persona Profiles")
+    with st.container():
+        for p in state.population:
+            with st.expander(f"**Persona {p.id}:** {p.profile.splitlines()[0]}"):
+                st.markdown(p.profile)
+
+    # Conversation Timeline
     if state.structured_log:
         st.subheader("🗣️ Conversation Timeline")
-        st.markdown("_Hover over a persona's header for their profile, or over a statement for their internal thought._")
-        html_table = generate_timeline_html(state.structured_log, state.population)
-        st.components.v1.html(html_table, height=600, scrolling=True)
+        for i, step_data in enumerate(state.structured_log):
+            st.markdown(f"#### Step {step_data['step']}: {step_data['event']}")
+            if step_data.get('user_utterance'):
+                st.markdown(f"> _User says: {step_data['user_utterance']}_")
+
+            statements = {p['id']: p['statement'] for p in step_data['personas']}
+            thoughts = {p['id']: p['thought'] for p in step_data['personas']}
+
+            for p in state.population:
+                statement = statements.get(p.id, "_(No statement)_")
+                thought = thoughts.get(p.id, "_(No thought recorded)_").strip()
+
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.markdown(f"**P{p.id}:** {statement}")
+                with col2:
+                    # Unique key for each button
+                    button_key = f"thought_{i}_{p.id}"
+                    if st.button("View Thought", key=button_key, use_container_width=True):
+                        # Toggle visibility state
+                        st.session_state.thought_vis[button_key] = not st.session_state.thought_vis.get(button_key, False)
+
+                # Display thought if button was toggled to visible
+                if st.session_state.thought_vis.get(button_key, False):
+                    st.info(f"**Internal Thought (P{p.id}):**\n\n{thought}")
+            st.markdown("---")
     else:
         st.info("Run the first step to see the timeline.")
+
     if st.session_state.finalized:
         st.subheader("📈 Visualizations")
         plot_logger = Logger()
