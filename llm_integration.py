@@ -1,7 +1,25 @@
 import requests
 import json
 import os
+import re
 from persona import Persona
+
+def extract_json_from_response(text: str) -> str:
+    """
+    Extracts a JSON object from a string, even if it's embedded in other text.
+    Handles markdown code blocks (```json ... ```).
+    """
+    # Look for JSON in markdown code blocks
+    match = re.search(r"```(?:json)?\s*({.*})\s*```", text, re.DOTALL)
+    if match:
+        return match.group(1)
+    
+    # Look for the first occurrence of a curly brace and the last one
+    match = re.search(r"({.*})", text, re.DOTALL)
+    if match:
+        return match.group(1)
+
+    return text # Return original text if no JSON object is found
 
 def get_ollama_api_url():
     """Reads the base URL from config.json and returns the full generate endpoint."""
@@ -134,7 +152,10 @@ def distill_state_from_thought(persona: Persona, thought: str, model_name: str, 
         if len(response_text) > 1_000_000: # 1MB limit
             logger.log("Warning: JSON response from LLM is too large, skipping.")
             return {**{name: persona.attributes[i] for i, name in enumerate(axes.values())}, "mood": persona.mood}
-        new_state = json.loads(response_text)
+        
+        json_str = extract_json_from_response(response_text)
+        new_state = json.loads(json_str)
+
         expected_keys = list(axes.values()) + ["mood"]
         if all(key in new_state for key in expected_keys):
             return new_state
@@ -178,7 +199,10 @@ def generate_ideological_axes(profiles: list[str], first_event: str, model_name:
         if len(response_text) > 1_000_000: # 1MB limit
             logger.log("Warning: JSON response from LLM is too large, skipping.")
             return {"axis_1": "default_axis_1", "axis_2": "default_axis_2"}
-        axes = json.loads(response_text)
+        
+        json_str = extract_json_from_response(response_text)
+        axes = json.loads(json_str)
+
         if all(key in axes for key in ["axis_1", "axis_2"]):
             logger.log(f"Generated Axes: {axes}")
             return axes
@@ -223,7 +247,10 @@ def initialize_persona_vector(profile: str, axes: dict, model_name: str, logger)
         if len(response_text) > 1_000_000: # 1MB limit
             logger.log("Warning: JSON response from LLM is too large, skipping.")
             return {axis_1_name: 0.0, axis_2_name: 0.0}
-        vector = json.loads(response_text)
+
+        json_str = extract_json_from_response(response_text)
+        vector = json.loads(json_str)
+
         if all(key in vector for key in [axis_1_name, axis_2_name]):
             return vector
         else:
