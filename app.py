@@ -39,22 +39,21 @@ def generate_timeline_html(structured_log, population):
         .sim-tooltip .sim-tooltiptext {
             visibility: hidden;
             width: 350px;
-            background-color: rgba(40, 40, 40, 0.95);
+            background-color: #333;
             color: #fff;
             text-align: left;
             border-radius: 6px;
-            padding: 10px;
+            padding: 8px;
             position: absolute;
             z-index: 9999;
-            top: 110%; /* Position below the element */
-            left: 0;   /* Align to the left of the element */
+            bottom: 125%;
+            left: 50%;
+            margin-left: -175px;
             opacity: 0;
             transition: opacity 0.3s;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: normal;
             white-space: pre-wrap;
-            border: 1px solid #555;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         .sim-tooltip:hover .sim-tooltiptext {
             visibility: visible;
@@ -72,7 +71,7 @@ def generate_timeline_html(structured_log, population):
         }
         .sim-table th {
             background-color: #262730;
-            color: white; /* Ensure header text is white */
+            color: white;
         }
     </style>
     """
@@ -145,7 +144,7 @@ with st.sidebar:
         else:
             st.session_state.sim_state = state
             st.session_state.simulation_started = True
-            st.rerun()
+            st.rerun() 
 
     if st.session_state.simulation_started:
         if st.button("⏹️ Reset Simulation", use_container_width=True):
