@@ -1,7 +1,25 @@
 import requests
 import json
 import os
+import re
 from persona import Persona
+
+def extract_json_from_response(text: str) -> str:
+    """
+    Extracts a JSON object from a string, even if it's embedded in other text.
+    Handles markdown code blocks (```json ... ```).
+    """
+    # Look for JSON in markdown code blocks
+    match = re.search(r"```(?:json)?\s*({.*})\s*```", text, re.DOTALL)
+    if match:
+        return match.group(1)
+
+    # Look for the first occurrence of a curly brace and the last one
+    match = re.search(r"({.*})", text, re.DOTALL)
+    if match:
+        return match.group(1)
+
+    return text # Return original text if no JSON object is found
 
 def get_ollama_api_url():
     """Reads the base URL from config.json and returns the full generate endpoint."""
@@ -117,8 +135,8 @@ Their current ideological state is: {json.dumps(current_attributes)}.
 The person's thought is: "{thought}"
 Based *only* on this thought, how would their state change?
 The values for the axes and mood must be between -1.0 and 1.0.
-Respond ONLY with a single, valid JSON object containing the updated values for "{axis_1_name}", "{axis_2_name}", and "mood".
-Example response: {{"{axis_1_name}": 0.1, "{axis_2_name}": -0.35, "mood": -0.4}}
+Your response MUST be a single, valid JSON object and nothing else. Do not add any commentary, explanation, or markdown formatting. The JSON object must contain only the following keys: "{axis_1_name}", "{axis_2_name}", "mood".
+Example of a valid response: {{"{axis_1_name}": 0.1, "{axis_2_name}": -0.35, "mood": -0.4}}
 """
 
 def distill_state_from_thought(persona: Persona, thought: str, model_name: str, axes: dict, logger) -> dict:
@@ -134,7 +152,10 @@ def distill_state_from_thought(persona: Persona, thought: str, model_name: str, 
         if len(response_text) > 1_000_000: # 1MB limit
             logger.log("Warning: JSON response from LLM is too large, skipping.")
             return {**{name: persona.attributes[i] for i, name in enumerate(axes.values())}, "mood": persona.mood}
-        new_state = json.loads(response_text)
+
+        json_str = extract_json_from_response(response_text)
+        new_state = json.loads(json_str)
+
         expected_keys = list(axes.values()) + ["mood"]
         if all(key in new_state for key in expected_keys):
             return new_state
@@ -159,8 +180,8 @@ Participants:
 Initial Event:
 "{first_event}"
 Based on this information, identify the two most important ideological axes of conflict or debate. An axis should represent a spectrum between two opposing views.
-Respond ONLY with a single, valid JSON object with two keys, "axis_1" and "axis_2". The value for each should be a short, descriptive name for the axis (e.g., "Environmentalism vs. Economic Growth").
-Example Response:
+Your response MUST be a single, valid JSON object and nothing else. Do not add any commentary, explanation, or markdown formatting. The JSON object must contain only the following keys: "axis_1", "axis_2".
+Example of a valid response:
 {{"axis_1": "Community Solidarity vs. Individual Profit", "axis_2": "Trust in Authority vs. Grassroots Action"}}
 """
 
@@ -178,7 +199,10 @@ def generate_ideological_axes(profiles: list[str], first_event: str, model_name:
         if len(response_text) > 1_000_000: # 1MB limit
             logger.log("Warning: JSON response from LLM is too large, skipping.")
             return {"axis_1": "default_axis_1", "axis_2": "default_axis_2"}
-        axes = json.loads(response_text)
+
+        json_str = extract_json_from_response(response_text)
+        axes = json.loads(json_str)
+
         if all(key in axes for key in ["axis_1", "axis_2"]):
             logger.log(f"Generated Axes: {axes}")
             return axes
@@ -204,8 +228,8 @@ The two main ideological axes for the current debate are:
 For each axis, please estimate where this person would stand on a scale from -1.0 to 1.0.
 - For axis 1, a score of 1.0 means strong agreement with the first part of the axis name, and -1.0 means strong agreement with the second part.
 - For axis 2, a score of 1.0 means strong agreement with the first part of the axis name, and -1.0 means strong agreement with the second part.
-Respond ONLY with a single, valid JSON object with two keys, "{axis_1_name}" and "{axis_2_name}".
-Example Response:
+Your response MUST be a single, valid JSON object and nothing else. Do not add any commentary, explanation, or markdown formatting. The JSON object must contain only the following keys: "{axis_1_name}", "{axis_2_name}".
+Example of a valid response:
 {{"{axis_1_name}": 0.8, "{axis_2_name}": -0.3}}
 """
 
@@ -223,7 +247,10 @@ def initialize_persona_vector(profile: str, axes: dict, model_name: str, logger)
         if len(response_text) > 1_000_000: # 1MB limit
             logger.log("Warning: JSON response from LLM is too large, skipping.")
             return {axis_1_name: 0.0, axis_2_name: 0.0}
-        vector = json.loads(response_text)
+
+        json_str = extract_json_from_response(response_text)
+        vector = json.loads(json_str)
+
         if all(key in vector for key in [axis_1_name, axis_2_name]):
             return vector
         else:

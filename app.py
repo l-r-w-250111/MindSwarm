@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import json
 import pandas as pd
-from main import initialize_simulation, run_simulation_step, finalize_simulation, Logger
+from simulation_core import initialize_simulation, run_simulation_step, finalize_simulation, Logger
 from visualize import plot_influence_network, plot_mood_history
 
 # --- Page Config ---
@@ -39,21 +39,22 @@ def generate_timeline_html(structured_log, population):
         .sim-tooltip .sim-tooltiptext {
             visibility: hidden;
             width: 350px;
-            background-color: #333;
+            background-color: rgba(40, 40, 40, 0.95);
             color: #fff;
             text-align: left;
             border-radius: 6px;
-            padding: 8px;
+            padding: 10px;
             position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -175px;
+            z-index: 9999;
+            top: 110%; /* Position below the element */
+            left: 0;   /* Align to the left of the element */
             opacity: 0;
             transition: opacity 0.3s;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: normal;
             white-space: pre-wrap;
+            border: 1px solid #555;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         .sim-tooltip:hover .sim-tooltiptext {
             visibility: visible;
@@ -71,11 +72,12 @@ def generate_timeline_html(structured_log, population):
         }
         .sim-table th {
             background-color: #262730;
+            color: white; /* Ensure header text is white */
         }
     </style>
     """
     html += '<table class="sim-table"><thead><tr>'
-    html += "<th>Step</th><th>Event</th>"
+    html += "<th>Step</th><th>Event</th><th>User</th>"
     for p in population:
         header_text = f"Persona {p.id}"
         tooltip_text = p.profile.replace('"', '&quot;').replace('\n', '<br>')
@@ -86,6 +88,8 @@ def generate_timeline_html(structured_log, population):
         html += "<tr>"
         html += f"<td>{step_data['step']}</td>"
         html += f"<td>{step_data['event']}</td>"
+        user_utterance = step_data.get('user_utterance', '')
+        html += f"<td>{user_utterance}</td>"
         statements = {p['id']: p['statement'] for p in step_data['personas']}
         thoughts = {p['id']: p['thought'] for p in step_data['personas']}
         for p in population:
@@ -185,8 +189,9 @@ if st.session_state.simulation_started:
     state = st.session_state.sim_state
     if state.structured_log:
         st.subheader("🗣️ Conversation Timeline")
+        st.markdown("_Hover over a persona's header for their profile, or over a statement for their internal thought._")
         html_table = generate_timeline_html(state.structured_log, state.population)
-        st.markdown(html_table, unsafe_allow_html=True)
+        st.components.v1.html(html_table, height=600, scrolling=True)
     else:
         st.info("Run the first step to see the timeline.")
     if st.session_state.finalized:

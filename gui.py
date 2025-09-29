@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, Slot, QObject, QItemSelectionModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 
-from main import (
+from simulation_core import (
     initialize_simulation,
     run_simulation_step,
     finalize_simulation,
