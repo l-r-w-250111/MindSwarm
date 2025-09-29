@@ -120,7 +120,7 @@ class App(QMainWindow):
         self.next_step_button.clicked.connect(self.run_next_step_thread)
         self.next_step_button.setEnabled(False)
         sim_button_layout.addWidget(self.next_step_button)
-
+        
         controls_grid_layout.addLayout(sim_button_layout, 5, 0, 1, 3)
 
         # Live Log
@@ -162,7 +162,7 @@ class App(QMainWindow):
         self.submit_user_input_btn.clicked.connect(self.on_submit_user_input)
         self.submit_user_input_btn.setEnabled(False)
         user_interaction_layout.addWidget(self.submit_user_input_btn, 1)
-
+        
         user_interaction_group.setLayout(user_interaction_layout) # Set layout on the group box
         results_layout.addWidget(user_interaction_group) # Add the group box to the main layout
 
@@ -207,13 +207,13 @@ class App(QMainWindow):
         # Log the intervention
         self.logger_callback(f"\n--- USER INTERVENTION ---")
         self.logger_callback(f"Overriding next event with: \"{user_text}\"")
-
+        
         # Override the next event in the simulation state
         self.sim_state.scenario[self.sim_state.current_step] = user_text
-
+        
         # Clear the input box
         self.user_input_text.clear()
-
+        
         # Trigger the next step with the user's event
         self.run_next_step_thread()
 
@@ -260,7 +260,7 @@ class App(QMainWindow):
             return
 
         self.sim_state = state
-
+        
         # Setup Timeline Table
         headers = ["Step", "Event"]
         for p in self.sim_state.population:
@@ -336,7 +336,7 @@ class App(QMainWindow):
         final_thread = threading.Thread(target=self.simulation_finalizer_worker)
         final_thread.daemon = True
         final_thread.start()
-
+        
     @Slot(object)
     def handle_finalization_done(self, state):
         if state is None:
@@ -360,7 +360,7 @@ class App(QMainWindow):
     # --- GUI Update Logic ---
     def clear_results(self):
         self.log_text_widget.clear()
-
+        
         # Clear timeline table
         self.timeline_table.setRowCount(0)
         self.timeline_table.setColumnCount(0)
@@ -371,9 +371,9 @@ class App(QMainWindow):
         self.canvas_net.draw()
         self.fig_mood.clear()
         self.canvas_mood.draw()
-
+        
         # Reset data and user input
-        self.simulation_data = []
+        self.simulation_data = [] 
         self.user_input_text.clear()
         self.user_input_text.setEnabled(False)
         self.submit_user_input_btn.setEnabled(False)
@@ -382,7 +382,7 @@ class App(QMainWindow):
         from PySide6.QtWidgets import QTableWidgetItem
         # The latest step's data is the last one in the structured_log
         step_data = self.sim_state.structured_log[-1]
-
+        
         row_position = self.timeline_table.rowCount()
         self.timeline_table.insertRow(row_position)
 
@@ -397,7 +397,7 @@ class App(QMainWindow):
         for col, persona in enumerate(self.sim_state.population, start=2):
             statement = persona_statements.get(persona.id, "N/A")
             item = QTableWidgetItem(statement)
-
+            
             thought = persona_thoughts.get(persona.id, "")
             item.setToolTip(f"Internal Thought:\n{thought}")
             self.timeline_table.setItem(row_position, col, item)

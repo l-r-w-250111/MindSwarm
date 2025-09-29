@@ -202,7 +202,7 @@ def run_simulation_step(state: SimulationState, user_utterance: str = None):
     state.statements_previous_step = statements_this_step.copy()
     state.influence_matrix = build_influence_matrix(state.population, threshold=0.6)
     logger.log(f"\n--- End of Step {step + 1}: Avg Mood: {average_mood:.3f}, Matrix Density: {state.influence_matrix.nnz / (len(state.population)**2):.2%} ---")
-
+    
     state.current_step += 1
     return state
 
@@ -215,6 +215,6 @@ def finalize_simulation(state: SimulationState):
         plot_influence_network(state.population, state.influence_matrix, logger)
         plot_mood_history(state.mood_history, logger)
         logger.log("--- Visualizations Generated ---")
-
+    
     logger.log("\n--- Closing Log ---")
     logger.close()

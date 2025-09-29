@@ -15,7 +15,7 @@ def run_llm_simulation(model_name: str, scenario_path: str, personas_path: str, 
     Runs a full simulation, orchestrating initialization, step-by-step execution, and finalization.
     """
     state = initialize_simulation(model_name, scenario_path, personas_path, log_path, listen_to_all, gui_mode, logger_callback)
-
+    
     if state is None:
         # Initialization failed
         return None if gui_mode else 1
